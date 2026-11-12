@@ -1,1 +1,28 @@
+name: dinner-planning-agent
+version: 1.0.0
+description: >
+  Concierge Culinary Agent that creates personalized dinner plans from
+  available household ingredients while adhering to dietary preferences.
 
+models:
+  fast_routing: gemini-1.5-flash
+  complex_planning: gemini-1.5-pro
+  temperature: 0.7
+
+memory:
+  compaction_strategy: sliding_window
+  max_history_length: 10
+  retained_turns: 4
+
+tools:
+  - name: generate_recipe_from_ingredients
+    module: tools
+    description: Generates a personalized dinner recipe from available ingredients and dietary restrictions.
+
+observability:
+  log_level: INFO
+  log_format: json
+  capture_intent_outcome: true
+
+security:
+  api_key_env: GEMINI_API_KEY
