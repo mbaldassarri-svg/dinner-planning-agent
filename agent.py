@@ -5,7 +5,11 @@ import os
 import logging
 from google import genai
 from google.genai import types
-from tools import generate_recipe_from_ingredients
+from google.adk.agents import Agent
+try:
+    from .tools import generate_recipe_from_ingredients
+except ImportError:
+    from tools import generate_recipe_from_ingredients
 
 # 4. Observability: Structured JSON Logging
 logging.basicConfig(level=logging.INFO, format='{"time": "%(asctime)s", "level": "%(levelname)s", "message": "%(message)s"}')
@@ -68,3 +72,27 @@ class DinnerPlannerAgent:
         except Exception as e:
             logger.error(f"Error during execution: {str(e)}")
             return "I ran into an issue planning your meal. Could you list your ingredients again?"
+
+
+# Configure default Vertex AI environment for ADK CLI if GEMINI_API_KEY is not set
+if not os.getenv("GEMINI_API_KEY"):
+    os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "mbaiproject26")
+    os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "global")
+    os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
+
+# ADK Root Agent definition for `adk run` / `adk web`
+root_agent = Agent(
+    name="dinner_planner_agent",
+    model="gemini-3.8-flash",
+    description="Concierge Culinary Agent that creates dinner plans from available household ingredients.",
+    instruction=(
+        "You are an expert Concierge Culinary Agent specializing in creating outstanding dinner plans "
+        "from limited household ingredients. You operate strictly within the bounds of safety, cleanliness, "
+        "and health guidelines. Always be encouraging, brief, and structured. Ask the user for their "
+        "daily ingredients and dietary preferences, use the generate_recipe_from_ingredients tool when "
+        "ingredients are provided, and suggest creative dishes using only what they have plus standard "
+        "pantry staples (like salt, pepper, oil)."
+    ),
+    tools=[generate_recipe_from_ingredients],
+)
+
